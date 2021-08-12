@@ -3,20 +3,22 @@ from datetime import datetime
 import sys
 
 now = datetime.now()
-today = now.strftime('%Y-%d-%m')
+today = now.strftime('%d/%m/%y')
 time = now.strftime('%H:%M:%S')
 
 def clockin(today, time):
+    zeros = '00:00:00'
+
     try:
         timeclock = pd.read_csv('timeclock.csv')
-        timeclock.loc[len(timeclock.index)] = [today, time, 0, 0, 0, 0, 0]
+        timeclock.loc[len(timeclock.index)] = [today, time, zeros, zeros, zeros, zeros, zeros]
     except:
         timeclock = pd.DataFrame({'Date' : today,
                                   'In' : time,
-                                  'Out' : 0,
+                                  'Out' : zeros,
                                   'Hours' : 0,
-                                  'Break In' : 0,
-                                  'Break Out' : 0,
+                                  'Break In' : zeros,
+                                  'Break Out' : zeros,
                                   'Break Hours' : 0},
                                  index=['Date'])
     return timeclock
