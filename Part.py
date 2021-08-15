@@ -82,7 +82,7 @@ class Part:
             forecasts[model_fit.forecast()[0]] = model_fit.get_forecast().conf_int()[0]
             temp = np.append(temp, model_fit.forecast()[0])
 
-        return forecasts, best_preds, best_order
+        return forecasts, best_preds
 
     def plot(self, forecasts, preds):
         pred_idx = self.data.iloc[-len(preds):].index
