@@ -2,6 +2,8 @@ import re
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
+import plotly.graph_objects as go
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.metrics import mean_squared_error
 
@@ -49,7 +51,7 @@ class Cross:
         def evaluate_arima(X, order):
             # split data
             train = int(len(X) * 0.66)
-            train, test = X[0:train], X[train:]
+            train, test = X[:train], X[train:]
 
             # predict
             predictions = []
@@ -60,22 +62,22 @@ class Cross:
                 predictions.append(yhat)
                 train = np.append(train, test[i])
             error = mean_squared_error(test, predictions)
-            return error
+            return error, predictions
 
         p_vals = range(11)
         d_vals = range(6)
         q_vals = range(6)
 
-        best_score, best_order = float('inf'), None
+        best_score, best_order, best_preds = float('inf'), None, None
 
         for p in p_vals:
             for d in d_vals:
                 for q in q_vals:
                     order = (p, d, q)
                     try:
-                        mse = evaluate_arima(dat.values, order)
+                        mse, preds = evaluate_arima(dat.values, order)
                         if mse < best_score:
-                            best_score, best_order = mse, order
+                            best_score, best_order, best_preds = mse, order, preds
                     except:
                         continue
 
@@ -88,5 +90,13 @@ class Cross:
             forecasts[model_fit.forecast()[0]] = model_fit.get_forecast().conf_int()[0]
             temp = np.append(temp, model_fit.forecast()[0])
 
-        return forecasts
+        return forecasts, best_preds
+
+    def plot(self, forecasts, preds):
+        pred_idx = self.data.iloc[-len(preds):].index
+        forecast_idx = pd.to_datetime([pred_idx[-1].date() + relativedelta(months=i+1) for i in range(len(forecasts))])
+        idx = pred_idx.append(forecast_idx)
+        all_preds = preds + [key for key in forecasts]
+
+        return go.Scatter(x=idx, y=all_preds, name='Forecast')
 
