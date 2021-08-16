@@ -48,6 +48,9 @@ class Cross:
         if dat is None:
             dat = (self.get_multiplier() * use_only[self.parts]).sum(axis=1)
 
+        if len(dat) == 1:
+            return {dat.iloc[0, 0]: [dat.iloc[0, 0], dat.iloc[0, 0]]}, [dat.iloc[0, 0]]
+
         def evaluate_arima(X, order):
             # split data
             train = int(len(X) * 0.66)

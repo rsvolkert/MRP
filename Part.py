@@ -40,6 +40,9 @@ class Part:
         if dat is None:
             dat = self.data
 
+        if len(dat) == 1:
+            return {dat.iloc[0, 0]: [dat.iloc[0, 0], dat.iloc[0, 0]]}, [dat.iloc[0, 0]]
+
         def evaluate_arima(X, order):
             # split data
             train = int(len(X) * 0.66)
