@@ -46,8 +46,8 @@ class Cross:
         return data.loc[self.parts, 'multiplier']
 
     def nonzero(self):
-        cross = (self.multiplier() * use_only[self.parts]).sum(axis=1)
-        return cross.iloc[cross.to_numpy().nonzero[0].min():]
+        cross = (self.get_multiplier() * use_only[self.parts]).sum(axis=1)
+        return cross.iloc[cross.to_numpy().nonzero()[0].min():]
 
     def forecast(self, months, dat=None):
         if dat is None:
