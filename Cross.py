@@ -49,7 +49,7 @@ class Cross:
         cross = (self.multiplier() * use_only[self.parts]).sum(axis=1)
         return cross.iloc[cross.to_numpy().nonzero[0].min():]
 
-    def forecast(self, dat=None):
+    def forecast(self, months, dat=None):
         if dat is None:
             dat = (self.get_multiplier() * use_only[self.parts]).sum(axis=1)
 
@@ -92,7 +92,7 @@ class Cross:
         temp = dat.values
         forecasts = {}
 
-        for i in range(5):
+        for i in range(months):
             model = ARIMA(temp, best_order)
             model_fit = model.fit()
             forecasts[model_fit.forecast()[0]] = model_fit.get_forecast().conf_int()[0]

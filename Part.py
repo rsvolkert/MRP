@@ -37,7 +37,7 @@ class Part:
     def nonzero(self):
         return self.data.iloc[self.data.to_numpy().nonzero()[0].min():]
 
-    def forecast(self, dat=None):
+    def forecast(self, months, dat=None):
         if dat is None:
             dat = self.data
 
@@ -80,7 +80,7 @@ class Part:
         temp = dat.values
         forecasts = {}
 
-        for i in range(5):
+        for i in range(months):
             model = ARIMA(temp, order=best_order)
             model_fit = model.fit()
             forecasts[model_fit.forecast()[0]] = model_fit.get_forecast().conf_int()[0]
