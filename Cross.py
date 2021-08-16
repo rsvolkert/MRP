@@ -1,4 +1,6 @@
 import re
+import sys
+import warnings
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -6,6 +8,9 @@ from dateutil.relativedelta import relativedelta
 import plotly.graph_objects as go
 from statsmodels.tsa.arima.model import ARIMA
 from sklearn.metrics import mean_squared_error
+
+if not sys.warnoptions:
+    warnings.simplefilter('ignore')
 
 data = pd.read_excel('~/OneDrive/Consumption file/Consume + Ship Data - RV edits.xlsx', sheet_name='Main')
 data = data.loc[data.PartNumber.notnull()]
