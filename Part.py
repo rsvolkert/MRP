@@ -32,6 +32,7 @@ class Part:
     def __init__(self, part_num):
         self.part = part_num
         self.data = use_only[self.part]
+        self.cross = data.loc[part_num, 'Cross']
 
     def nonzero(self):
         return self.data.iloc[self.data.to_numpy().nonzero()[0].min():]
