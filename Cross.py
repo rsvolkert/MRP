@@ -67,7 +67,7 @@ class Cross:
             error = mean_squared_error(test, predictions)
             return error, predictions
 
-        p_vals = range(11)
+        p_vals = range(6)
         d_vals = range(6)
         q_vals = range(6)
 
