@@ -5,8 +5,10 @@ import numpy as np
 import plotly.graph_objects as go
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from sklearn.metrics import mean_squared_error
 from statsmodels.tsa.arima.model import ARIMA
+from multiprocessing import cpu_count
+from joblib import Parallel, delayed
+from evaluate_arima import evaluate_arima
 
 if not sys.warnoptions:
     warnings.simplefilter('ignore')
@@ -42,51 +44,38 @@ class Part:
             dat = self.data
 
         if len(dat) == 1:
-            return {dat.iloc[0, 0]: [dat.iloc[0, 0], dat.iloc[0, 0]]}, [dat.iloc[0, 0]]
+            return [dat.iloc[0,0]] * months, [], float('inf')
 
-        def evaluate_arima(X, order):
-            # split data
-            train = int(len(X) * 0.66)
-            train, test = X[:train], X[train:]
+        train = int(len(dat) * 0.66)
+        train, test = dat.values[:train], dat.values[train:]
 
-            # predict
-            predictions = []
-            for i in range(len(test)):
-                model = ARIMA(train, order=order)
-                model_fit = model.fit()
-                yhat = model_fit.forecast()[0]
-                predictions.append(yhat)
-                train = np.append(train, test[i])
-            error = mean_squared_error(test, predictions)
-            return error, predictions
+        score = []
+        try:
+            executor = Parallel(n_jobs=cpu_count(), backend='multiprocessing')
+            tasks = (delayed(evaluate_arima)(train, test, (p,d,q)) for p in range(6) for d in range(6) for q in range(6))
+            results = executor(tasks)
+            score.append(results)
+        except:
+            print('Error')
 
-        p_vals = range(6)
-        d_vals = range(6)
-        q_vals = range(6)
+        scores = [list(err.keys())[0] for err in score[0]]
+        best = score[0][scores.index(min(scores))]
 
-        best_score, best_order, best_preds = float('inf'), None, None
-
-        for p in p_vals:
-            for d in d_vals:
-                for q in q_vals:
-                    order = (p, d, q)
-                    try:
-                        mse, preds = evaluate_arima(dat.values, order)
-                        if mse < best_score:
-                            best_score, best_order, best_preds = mse, order, preds
-                    except:
-                        continue
+        err = list(best.keys())[0]
+        preds = list(best.values())[0][0]
+        order = list(best.values())[0][1]
 
         temp = dat.values
-        forecasts = {}
-
+        forecasts = []
         for i in range(months):
-            model = ARIMA(temp, order=best_order)
+            model = ARIMA(temp, order=order, missing='drop')
             model_fit = model.fit()
-            forecasts[model_fit.forecast()[0]] = model_fit.get_forecast().conf_int()[0]
-            temp = np.append(temp, model_fit.forecast()[0])
+            yhat = model_fit.forecast()[0] if model_fit.forecast()[0] > 0 else 0
 
-        return forecasts, best_preds
+            forecasts.append(yhat)
+            temp = np.append(temp, yhat)
+
+        return forecasts, preds, err
 
     def plot(self, forecasts, preds):
         pred_idx = self.data.iloc[-len(preds):].index
@@ -95,4 +84,3 @@ class Part:
         all_preds = preds + [key for key in forecasts]
 
         return go.Scatter(x=idx, y=all_preds, name='Forecast')
-
