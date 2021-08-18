@@ -68,7 +68,7 @@ class Part:
         temp = dat.values
         forecasts = []
         for i in range(months):
-            model = ARIMA(temp, order=order, missing='drop')
+            model = ARIMA(temp, order=order, missing='drop', enforce_stationarity=False)
             model_fit = model.fit()
             yhat = model_fit.forecast()[0] if model_fit.forecast()[0] > 0 else 0
 

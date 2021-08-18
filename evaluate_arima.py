@@ -13,7 +13,7 @@ def evaluate_arima(train, test, order):
     predictions = []
     for i in range(len(test)):
         try:
-            model = ARIMA(train, order=order, missing='drop')
+            model = ARIMA(train, order=order, missing='drop', enforce_stationarity=False)
             model_fit = model.fit()
         except:
             return {float('inf'): float('inf')}
