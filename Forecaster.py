@@ -1,6 +1,5 @@
 import pandas as pd
 from Part import Part
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 
@@ -28,31 +27,13 @@ class Forecaster:
                 self.predictions = self.predictions.reindex(dates)
             self.predictions.loc[dates, part_num] = predictions
 
+    def main(self):
+        self.forecast()
 
-if __name__ == '__main__':
-    data = pd.read_excel('~/OneDrive/Consumption file/Consume + Ship Data - RV edits.xlsx', sheet_name='Main')
-    data = data.loc[data.PartNumber.notnull()]
-    data.dropna(axis=1, how='all', inplace=True)
-    data.set_index('PartNumber', inplace=True)
+        writer = pd.ExcelWriter('Analysis Data.xlsx')
 
-    dates = []
-    for col in data.columns:
-        if isinstance(col, datetime):
-            dates.append(col)
+        self.forecasts.to_excel(writer, sheet_name='Forecasts')
+        self.predicitons.sort_index().to_Excel(writer, sheet_name='Predicitions')
+        self.errors.to_excel(writer, sheet_name='Errors')
 
-    use_only = data[dates].T
-    use_only['Date'] = [date.date() for date in use_only.index]
-    use_only.reset_index(drop=True, inplace=True)
-    use_only.set_index('Date', inplace=True)
-    use_only = use_only[use_only.columns[(use_only != 0).any()]]
-
-    forecaster = Forecaster(use_only, 5)
-    forecaster.forecast()
-
-    writer = pd.ExcelWriter('Analysis Data.xlsx')
-
-    forecaster.forecasts.to_excel(writer, sheet_name='Forecasts')
-    forecaster.predictions.sort_index().to_excel(writer, sheet_name='Predictions')
-    forecaster.errors.to_excel(writer, sheet_name='Errors')
-
-    writer.save()
+        writer.save()
