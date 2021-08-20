@@ -29,9 +29,9 @@ class Cross:
 
         for part in self.parts:
             if re.search('/\d+$', part):
-                data.loc[part, 'multiplier'] = units / int(part.split('/')[1])
+                data.loc[part, 'multiplier'] = int(part.split('/')[1]) / units
             else:
-                data.loc[part, 'multiplier'] = units
+                data.loc[part, 'multiplier'] = 1 / units
 
         return data.loc[self.parts, 'multiplier']
 
