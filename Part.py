@@ -17,7 +17,6 @@ class Part:
     def __init__(self, dat, part_num):
         self.part = part_num
         self.data = dat[self.part]
-        self.cross = data.loc[part_num, 'Cross']
 
     def nonzero(self):
         return self.data.iloc[self.data.to_numpy().nonzero()[0].min():]
@@ -59,11 +58,3 @@ class Part:
             temp = np.append(temp, yhat)
 
         return forecasts, preds, err
-
-    def plot(self, forecasts, preds):
-        pred_idx = self.data.iloc[-len(preds):].index
-        forecast_idx = pd.to_datetime([pred_idx[-1].date() + relativedelta(months=i+1) for i in range(len(forecasts))])
-        idx = pred_idx.append(forecast_idx)
-        all_preds = preds + [key for key in forecasts]
-
-        return go.Scatter(x=idx, y=all_preds, name='Forecast')
