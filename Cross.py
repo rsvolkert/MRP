@@ -22,13 +22,13 @@ class Cross:
 
     def get_multiplier(self):
 
-        if re.search('/\d+', self.name):
+        if re.search('/\d+$', self.name):
             units = int(self.name.split('/')[1])
         else:
             units = 1
 
         for part in self.parts:
-            if re.search('/', part):
+            if re.search('/\d+$', part):
                 data.loc[part, 'multiplier'] = units / int(part.split('/')[1])
             else:
                 data.loc[part, 'multiplier'] = units
