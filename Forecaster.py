@@ -17,7 +17,7 @@ class Forecaster:
 
     def forecast(self):
         for part_num in self.dat.columns:
-            part = Part(part_num)
+            part = Part(self.dat, part_num)
             forecasts, predictions, error = part.forecast(self.months, part.nonzero())
             self.forecasts[part_num] = forecasts
             self.errors.loc[part_num] = error / part.nonzero().mean()

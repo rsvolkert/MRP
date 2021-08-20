@@ -3,7 +3,6 @@ import warnings
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from statsmodels.tsa.arima.model import ARIMA
 from multiprocessing import cpu_count
@@ -13,27 +12,11 @@ from evaluate_arima import evaluate_arima
 if not sys.warnoptions:
     warnings.simplefilter('ignore')
 
-data = pd.read_excel('~/OneDrive/Consumption file/Consume + Ship Data - RV edits.xlsx', sheet_name='Main')
-data = data.loc[data.PartNumber.notnull()]
-data.dropna(axis=1, how='all', inplace=True)
-data.set_index('PartNumber', inplace=True)
-
-dates = []
-for col in data.columns:
-    if isinstance(col, datetime):
-        dates.append(col)
-
-use_only = data[dates].T
-use_only['Date'] = [date.date() for date in use_only.index]
-use_only.reset_index(drop=True, inplace=True)
-use_only.set_index('Date', inplace=True)
-use_only = use_only[use_only.columns[(use_only != 0).any()]]
-
 
 class Part:
-    def __init__(self, part_num):
+    def __init__(self, dat, part_num):
         self.part = part_num
-        self.data = use_only[self.part]
+        self.data = dat[self.part]
         self.cross = data.loc[part_num, 'Cross']
 
     def nonzero(self):
