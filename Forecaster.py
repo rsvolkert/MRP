@@ -39,10 +39,7 @@ class Forecaster:
             self.predictions = pd.concat([self.predictions, predictions], axis=1)
             self.errors = pd.concat([self.errors, errors], axis=0)
 
-        writer = pd.ExcelWriter('Analysis Data.xlsx')
-
-        self.forecasts.to_excel(writer, sheet_name='Forecasts')
-        self.predicitons.sort_index().to_Excel(writer, sheet_name='Predictions')
-        self.errors.to_excel(writer, sheet_name='Errors')
-
-        writer.save()
+        with pd.ExcelWriter('Analysis Data.xlsx', mode='a', if_sheet_exists='replace') as writer:
+            self.forecasts.to_excel(writer, sheet_name='Forecasts')
+            self.predicitons.sort_index().to_Excel(writer, sheet_name='Predictions')
+            self.errors.to_excel(writer, sheet_name='Errors')
