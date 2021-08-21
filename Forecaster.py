@@ -35,19 +35,19 @@ class Forecaster:
         if (forecasts.index == self.forecasts.index).all():
             new_forecasts = self.forecasts.columns
             joint_forecasts = [pn in forecasts.columns for pn in new_forecasts]
-            if new_forecasts[joint_forecasts]:
+            if list(new_forecasts[joint_forecasts]):
                 forecasts.drop(new_forecasts[joint_forecasts], axis=1, inplace=True)
             self.forecasts = pd.concat([self.forecasts, forecasts], axis=1)
 
             new_predictions = self.predictions.columns
             joint_predictions = [pn in predictions.columns for pn in new_predictions]
-            if new_predictions[joint_predictions]:
+            if list(new_predictions[joint_predictions]):
                 predictions.drop(new_predictions[joint_predictions], axis=1, inplace=True)
             self.predictions = pd.concat([self.predictions, predictions], axis=1)
 
             new_errors = self.errors.index
             joint_errors = [pn in errors.index for pn in new_errors]
-            if new_errors[joint_errors]:
+            if list(new_errors[joint_errors]):
                 errors.drop(new_errors[joint_errors], axis=0, inplace=True)
             self.errors = pd.concat([self.errors, errors], axis=0)
 
