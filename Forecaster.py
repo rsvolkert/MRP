@@ -29,7 +29,11 @@ class Forecaster:
 
     def to_excel(self):
         forecasts = pd.read_excel('Analysis Data.xlsx', sheet_name='Forecasts', index_col=0)
+        if isinstance(forecasts.index, pd.DatetimeIndex):
+            forecasts.index = forecasts.index.strftime('%Y-%m-%d')
         predictions = pd.read_excel('Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
+        if isinstance(predictions.index, pd.DatetimeIndex):
+            predictions.index = predictions.index.strftime('%Y-%m-%d')
         errors = pd.read_excel('Analysis Data.xlsx', sheet_name='Errors', index_col=0)
 
         if (forecasts.index == self.forecasts.index).all():
