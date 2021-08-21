@@ -1,9 +1,6 @@
 import sys
 import warnings
-import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
-from dateutil.relativedelta import relativedelta
 from statsmodels.tsa.arima.model import ARIMA
 from multiprocessing import cpu_count
 from joblib import Parallel, delayed
@@ -50,8 +47,13 @@ class Part:
         temp = dat.values
         forecasts = []
         for i in range(months):
-            model = ARIMA(temp, order=order, missing='drop', enforce_stationarity=False)
-            model_fit = model.fit()
+            try:
+                model = ARIMA(temp, order=order, missing='drop', enforce_stationarity=False)
+                model_fit = model.fit()
+            except IndexError:
+                order = (order[0], order[1]-1, order[2])
+                model = ARIMA(temp, order=order, missing='drop', enforce_stationarity=False)
+                model_fit = model.fit()
             yhat = model_fit.forecast()[0] if model_fit.forecast()[0] > 0 else 0
 
             forecasts.append(yhat)
