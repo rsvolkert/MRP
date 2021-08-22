@@ -57,5 +57,5 @@ class Forecaster:
 
         with pd.ExcelWriter('Analysis Data.xlsx', mode='a', if_sheet_exists='replace') as writer:
             self.forecasts.to_excel(writer, sheet_name='Forecasts')
-            self.predicitons.sort_index().to_excel(writer, sheet_name='Predictions')
+            self.predictions.sort_index().to_excel(writer, sheet_name='Predictions')
             self.errors.to_excel(writer, sheet_name='Errors')
