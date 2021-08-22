@@ -6,6 +6,7 @@ from datetime import datetime
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import IsolationForest
 from Cross import Cross
 from Forecaster import Forecaster
 
@@ -26,8 +27,11 @@ use_only.set_index('Date', inplace=True)
 use_only = use_only[use_only.columns[(use_only != 0).any()]]
 part_nums = use_only.columns
 
+crosses = pd.read_excel('Analysis Data.xlsx', sheet_name='Cross', index_col=0)
+
 categories = pd.read_excel('Analysis Data.xlsx', sheet_name='Categories', index_col=0)
-cat_opts = categories['Sales category'].dropna().unique()
+cat_idx = [pn in use_only.columns for pn in categories.index]
+cat_opts = categories.loc[cat_idx, 'Sales category'].dropna().unique()
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -93,20 +97,20 @@ def update_graph(part_num, n_clicks):
         forecast = prediction.append(forecast).sort_index()
         fig1.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
 
-    cross_name = data.loc[part_num, 'Cross']
+    cross_name = crosses.loc[part_num, 'Cross']
     if cross_name != 0:
         cross = Cross(cross_name)
         multiplier = cross.get_multiplier()
-        crosses = multiplier * use_only[cross.parts]
+        crossed = multiplier * use_only[cross.parts]
 
-        y = crosses.sum(axis=1).values
+        y = crossed.sum(axis=1).values
         model2 = LinearRegression()
         model2.fit(x, y)
         preds2 = model2.predict(x)
 
         fig2 = go.Figure()
-        fig2.add_trace(go.Scatter(x=crosses.index, y=preds2, name='Trend'))
-        fig2.add_trace(go.Scatter(x=crosses.index, y=crosses.sum(axis=1), name='Data'))
+        fig2.add_trace(go.Scatter(x=crossed.index, y=preds2, name='Trend'))
+        fig2.add_trace(go.Scatter(x=crossed.index, y=crossed.sum(axis=1), name='Data'))
     else:
         fig2 = go.Figure()
         fig2.add_trace(go.Scatter(x=dff.index, y=[0]*len(dff.index)))
