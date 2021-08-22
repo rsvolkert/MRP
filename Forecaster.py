@@ -29,33 +29,35 @@ class Forecaster:
 
     def to_excel(self):
         forecasts = pd.read_excel('Analysis Data.xlsx', sheet_name='Forecasts', index_col=0)
-        if isinstance(forecasts.index, pd.DatetimeIndex):
-            forecasts.index = forecasts.index.strftime('%Y-%m-%d')
         predictions = pd.read_excel('Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
-        if isinstance(predictions.index, pd.DatetimeIndex):
-            predictions.index = predictions.index.strftime('%Y-%m-%d')
         errors = pd.read_excel('Analysis Data.xlsx', sheet_name='Errors', index_col=0)
+
+        forecasts.index = pd.to_datetime(forecasts.index).strftime('%Y-%m-%d')
+        predictions.index = pd.to_datetime(predictions.index).strftime('%Y-%m-%d')
+
+        self.forecasts.index = pd.to_datetime(self.forecasts.index).strftime('%Y-%m-%d')
+        self.predictions.index = pd.to_datetime(self.predictions.index).strftime('%Y-%m-%d')
 
         if (forecasts.index == self.forecasts.index).all():
             new_forecasts = self.forecasts.columns
             joint_forecasts = [pn in forecasts.columns for pn in new_forecasts]
             if list(new_forecasts[joint_forecasts]):
                 forecasts.drop(new_forecasts[joint_forecasts], axis=1, inplace=True)
-            self.forecasts = pd.concat([self.forecasts, forecasts], axis=1)
+            forecasts = pd.concat([self.forecasts, forecasts], axis=1)
 
             new_predictions = self.predictions.columns
             joint_predictions = [pn in predictions.columns for pn in new_predictions]
             if list(new_predictions[joint_predictions]):
                 predictions.drop(new_predictions[joint_predictions], axis=1, inplace=True)
-            self.predictions = pd.concat([self.predictions, predictions], axis=1)
+            predictions = pd.concat([self.predictions, predictions], axis=1)
 
             new_errors = self.errors.index
             joint_errors = [pn in errors.index for pn in new_errors]
             if list(new_errors[joint_errors]):
                 errors.drop(new_errors[joint_errors], axis=0, inplace=True)
-            self.errors = pd.concat([self.errors, errors], axis=0)
+            errors = pd.concat([self.errors, errors], axis=0)
 
         with pd.ExcelWriter('Analysis Data.xlsx', mode='a', if_sheet_exists='replace') as writer:
-            self.forecasts.to_excel(writer, sheet_name='Forecasts')
-            self.predictions.sort_index().to_excel(writer, sheet_name='Predictions')
-            self.errors.to_excel(writer, sheet_name='Errors')
+            forecasts.to_excel(writer, sheet_name='Forecasts')
+            predictions.sort_index().to_excel(writer, sheet_name='Predictions')
+            errors.to_excel(writer, sheet_name='Errors')
