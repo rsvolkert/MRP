@@ -9,6 +9,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import IsolationForest
 from Cross import Cross
 from Forecaster import Forecaster
+import webbrowser
+from threading import Timer
 
 data = pd.read_excel('Analysis Data.xlsx', sheet_name='Main')
 data = data.loc[data.PartNumber.notnull()]
@@ -101,7 +103,9 @@ def update_graph(part_num, n_clicks):
     if cross_name != 0:
         cross = Cross(cross_name)
         multiplier = cross.get_multiplier()
-        crossed = multiplier * use_only[cross.parts]
+        parts = [pn in use_only.columns for pn in multiplier.index]
+        parts = multiplier[parts].index
+        crossed = multiplier.loc[parts] * use_only[parts]
 
         y = crossed.sum(axis=1).values
         model2 = LinearRegression()
@@ -135,21 +139,26 @@ def update_graph(part_num, n_clicks):
 )
 def forecast(n_clicks, options):
     if not n_clicks:
-        return 'Press forecast when ready'
+        return 'Select categories and click forecast.'
 
     if not options:
-        return 'You must select a category'
+        return 'You must select a category.'
 
     pns = categories[categories['Sales category'].isin(options)].index
     pns = pns[pns.isin(use_only.columns)]
     dat = use_only[pns]
 
-    forecaster = Forecaster(dat, 5)
+    forecaster = Forecaster(dat, 6)
     forecaster.forecast()
     forecaster.to_excel()
 
     return 'Forecasting complete. Click reload to see changes.'
 
 
+def open_browser():
+    webbrowser.open_new('http://localhost:8050')
+
+
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    Timer(1, open_browser).start()
+    app.run_server()
