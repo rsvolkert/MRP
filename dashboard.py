@@ -48,7 +48,7 @@ app.layout = html.Div([
 
     html.Div([
         html.P('Please select a part.'),
-        
+
         dcc.Dropdown(
             id='dropdown',
             options=[{'label': i, 'value': i} for i in part_nums],
@@ -69,8 +69,10 @@ app.layout = html.Div([
 
     html.Br(),
 
-    html.Button('Forecast', id='btn', n_clicks=0),
-    html.Div(id='container', children='Select categories and press forecast'),
+    html.Div([
+        html.Button('Forecast', id='btn', n_clicks=0),
+        html.Div(id='container', children='Select categories and press forecast')
+    ]),
 
     html.Br(),
 
@@ -87,6 +89,22 @@ app.layout = html.Div([
     [Input('dropdown', 'value'),
      Input('reload', 'n_clicks')])
 def update_graph(part_num, n_clicks):
+    data = pd.read_excel('Analysis Data.xlsx', sheet_name='Main')
+    data = data.loc[data.PartNumber.notnull()]
+    data.dropna(axis=1, how='all', inplace=True)
+    data.set_index('PartNumber', inplace=True)
+
+    dates = []
+    for col in data.columns:
+        if isinstance(col, datetime):
+            dates.append(col)
+
+    use_only = data[dates].T
+    use_only['Date'] = [date.date() for date in use_only.index]
+    use_only.reset_index(drop=True, inplace=True)
+    use_only.set_index('Date', inplace=True)
+    use_only = use_only[use_only.columns[(use_only != 0).any()]]
+
     forecasts = pd.read_excel('Analysis Data.xlsx', sheet_name='Forecasts', index_col=0)
     predictions = pd.read_excel('Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
 
