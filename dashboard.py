@@ -35,18 +35,27 @@ categories = pd.read_excel('Analysis Data.xlsx', sheet_name='Categories', index_
 cat_idx = [pn in use_only.columns for pn in categories.index]
 cat_opts = categories.loc[cat_idx, 'Sales category'].dropna().unique()
 
+errors = pd.read_excel('Analysis Data.xlsx', sheet_name='Errors', index_col=0)
+danger = errors.loc[errors[0] > 0.5]
+
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div([
 
-    dcc.Dropdown(
-        id='dropdown',
-        options=[{'label': i, 'value': i} for i in part_nums],
-        value=part_nums[0],
-        clearable=False
-    ),
+    html.H1('Rupes Forecaster', style={'text-align': 'center'}),
+
+    html.Div([
+        html.P('Please select a part.'),
+        
+        dcc.Dropdown(
+            id='dropdown',
+            options=[{'label': i, 'value': i} for i in part_nums],
+            value=part_nums[0],
+            clearable=False
+        )
+    ]),
 
     html.Br(),
 
@@ -94,7 +103,7 @@ def update_graph(part_num, n_clicks):
     fig1.add_trace(go.Scatter(x=dff.Date, y=dff[part_num], name='Data'))
 
     if part_num in forecasts.columns:
-        forecast = forecasts[part_num]
+        forecast = forecasts[part_num].dropna()
         prediction = predictions[part_num].dropna()
         forecast = prediction.append(forecast).sort_index()
         fig1.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
@@ -149,8 +158,11 @@ def forecast(n_clicks, options):
     dat = use_only[pns]
 
     forecaster = Forecaster(dat, 6)
-    forecaster.forecast()
-    forecaster.to_excel()
+    try:
+        forecaster.forecast()
+        forecaster.to_excel()
+    except:
+        return 'There was an error.'
 
     return 'Forecasting complete. Click reload to see changes.'
 

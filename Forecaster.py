@@ -38,7 +38,7 @@ class Forecaster:
         self.forecasts.index = pd.to_datetime(self.forecasts.index).strftime('%Y-%m-%d')
         self.predictions.index = pd.to_datetime(self.predictions.index).strftime('%Y-%m-%d')
 
-        if (forecasts.index.min() == self.forecasts.index.min()).all():
+        if forecasts.index.min() == self.forecasts.index.min():
             new_forecasts = self.forecasts.columns
             joint_forecasts = [pn in forecasts.columns for pn in new_forecasts]
             if list(new_forecasts[joint_forecasts]):
