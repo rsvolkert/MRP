@@ -2,7 +2,7 @@ import re
 import pandas as pd
 from datetime import datetime
 
-data = pd.read_excel('~/OneDrive/Consumption file/Consume + Ship Data - RV edits.xlsx', sheet_name='Main')
+data = pd.read_excel('Analysis Data.xlsx', sheet_name='Main')
 data = data.loc[data.PartNumber.notnull()]
 data.dropna(axis=1, how='all', inplace=True)
 data.set_index('PartNumber', inplace=True)
