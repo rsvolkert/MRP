@@ -114,8 +114,8 @@ def update_graph(cross_val, n_clicks):
     use_only.set_index('Date', inplace=True)
     use_only = use_only[use_only.columns[(use_only != 0).any()]]
 
-    forecasts = pd.read_excel('Analysis Data.xlsx', sheet_name='Forecasts', index_col=0)
-    predictions = pd.read_excel('Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
+    forecasts = pd.read_excel('Analysis Data.xlsx', sheet_name='Forecasts', index_col=0).T
+    predictions = pd.read_excel('Analysis Data.xlsx', sheet_name='Predictions', index_col=0).T
 
     # generate cross
     cross = Cross(cross_val)
