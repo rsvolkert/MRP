@@ -2,7 +2,7 @@ import re
 import pandas as pd
 from datetime import datetime
 
-data = pd.read_excel('Analysis Data.xlsx', sheet_name='Main')
+data = pd.read_excel('Analysis Data.xlsx', sheet_name='Cross')
 data = data.loc[data.PartNumber.notnull()]
 data.dropna(axis=1, how='all', inplace=True)
 data.set_index('PartNumber', inplace=True)
@@ -18,7 +18,11 @@ use_only = data[dates].T
 class Cross:
     def __init__(self, cross_name):
         self.name = cross_name
-        self.parts = list(data.loc[data.Cross == self.name].index)
+
+        if cross_name not in data.Cross:
+            self.parts = list(data.loc[cross_name].index)
+        else:
+            self.parts = list(data.loc[data.Cross == self.name].index)
 
     def get_multiplier(self):
 

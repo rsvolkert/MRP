@@ -27,16 +27,24 @@ use_only['Date'] = [date.date() for date in use_only.index]
 use_only.reset_index(drop=True, inplace=True)
 use_only.set_index('Date', inplace=True)
 use_only = use_only[use_only.columns[(use_only != 0).any()]]
-part_nums = use_only.columns
+part_nums = use_only.columns.to_numpy()
 
 crosses = pd.read_excel('Analysis Data.xlsx', sheet_name='Cross', index_col=0)
 
 categories = pd.read_excel('Analysis Data.xlsx', sheet_name='Categories', index_col=0)
 cat_idx = [pn in use_only.columns for pn in categories.index]
-cat_opts = categories.loc[cat_idx, 'Sales category'].dropna().unique()
+cat_opts = list(categories.loc[cat_idx, 'Sales category'].dropna().unique())
+cat_opts.remove('Disc')
+
+# get part numbers that are not discontinued
+pn_filter = [pn not in categories.loc[categories['Sales category'] == 'Disc'].index for pn in part_nums]
+part_nums = list(part_nums[pn_filter])
+
+# generate crosses to be used
+crosses = crosses.loc[part_nums]
+crosses.loc[crosses.Cross == 0, 'Cross'] = crosses.loc[crosses.Cross == 0].index.values
 
 errors = pd.read_excel('Analysis Data.xlsx', sheet_name='Errors', index_col=0)
-danger = errors.loc[errors[0] > 0.5]
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -51,8 +59,8 @@ app.layout = html.Div([
 
         dcc.Dropdown(
             id='dropdown',
-            options=[{'label': i, 'value': i} for i in part_nums],
-            value=part_nums[0],
+            options=[{'label': i, 'value': i} for i in list(crosses.Cross.unique())],
+            value=crosses.Cross.unique()[0],
             clearable=False
         )
     ]),
@@ -78,17 +86,18 @@ app.layout = html.Div([
 
     html.Button('Reload', id='reload', n_clicks=0),
 
-    dcc.Graph(id='part_numbers'),
-    dcc.Graph(id='cross')
+    dcc.Graph(id='cross'),
+    html.Div(id='graph-container'),
+    html.Div(dcc.Graph(id='empty', figure={'data': []}), style={'display': 'none'})
 ])
 
 
 @app.callback(
-    [Output('part_numbers', 'figure'),
-     Output('cross', 'figure')],
+    [Output('cross', 'figure'),
+     Output('graph-container', 'children')],
     [Input('dropdown', 'value'),
      Input('reload', 'n_clicks')])
-def update_graph(part_num, n_clicks):
+def update_graph(cross_val, n_clicks):
     data = pd.read_excel('Analysis Data.xlsx', sheet_name='Main')
     data = data.loc[data.PartNumber.notnull()]
     data.dropna(axis=1, how='all', inplace=True)
@@ -108,55 +117,95 @@ def update_graph(part_num, n_clicks):
     forecasts = pd.read_excel('Analysis Data.xlsx', sheet_name='Forecasts', index_col=0)
     predictions = pd.read_excel('Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
 
-    dff = use_only[part_num].reset_index()
+    # generate cross
+    cross = Cross(cross_val)
 
-    x = dff.index.values.reshape(-1, 1)
-    y = dff[part_num].values
-    model1 = LinearRegression()
-    model1.fit(x, y)
-    preds1 = model1.predict(x)
+    if len(cross.parts) == 1:
+        part_num = cross.parts[0]
 
-    fig1 = go.Figure()
-    fig1.add_trace(go.Scatter(x=dff.Date, y=preds1, name='Trend'))
-    fig1.add_trace(go.Scatter(x=dff.Date, y=dff[part_num], name='Data'))
+        dff = use_only[part_num].reset_index()
 
-    if part_num in forecasts.columns:
-        forecast = forecasts[part_num].dropna()
-        prediction = predictions[part_num].dropna()
-        forecast = prediction.append(forecast).sort_index()
-        fig1.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
+        x = dff.index.values.reshape(-1, 1)
+        y = dff[part_num].values
+        model1 = LinearRegression()
+        model1.fit(x, y)
+        preds1 = model1.predict(x)
 
-    cross_name = crosses.loc[part_num, 'Cross']
-    if cross_name != 0:
-        cross = Cross(cross_name)
+        fig1 = go.Figure()
+        fig1.add_trace(go.Scatter(x=dff.Date, y=preds1, name='Trend'))
+        fig1.add_trace(go.Scatter(x=dff.Date, y=dff[part_num], name='Data'))
+
+        if part_num in forecasts.columns:
+            forecast = forecasts[part_num].dropna()
+            prediction = predictions[part_num].dropna()
+            forecast = prediction.append(forecast).sort_index()
+            fig1.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
+
+        fig1.update_layout(title='Total Consumption')
+
+        return fig1, []
+
+    else:
         multiplier = cross.get_multiplier()
         parts = [pn in use_only.columns for pn in multiplier.index]
         parts = multiplier[parts].index
         crossed = multiplier.loc[parts] * use_only[parts]
+        not_disc = [pn not in categories.loc[categories['Sales category'] == 'Disc'].index for pn in parts]
+        crossed = crossed[crossed.columns[not_disc]]
+        crossed = crossed.reset_index()
 
+        x = crossed.index.values.reshape(-1, 1)
         y = crossed.sum(axis=1).values
         model2 = LinearRegression()
         model2.fit(x, y)
         preds2 = model2.predict(x)
 
-        fig2 = go.Figure()
-        fig2.add_trace(go.Scatter(x=crossed.index, y=preds2, name='Trend'))
-        fig2.add_trace(go.Scatter(x=crossed.index, y=crossed.sum(axis=1), name='Data'))
-    else:
-        fig2 = go.Figure()
-        fig2.add_trace(go.Scatter(x=dff.index, y=[0]*len(dff.index)))
+        fig1 = go.Figure()
+        fig1.add_trace(go.Scatter(x=crossed.Date, y=preds2, name='Trend'))
+        fig1.add_trace(go.Scatter(x=crossed.Date, y=crossed.sum(axis=1), name='Data'))
 
-    fig1.update_layout(
-        title='Part Usage Over Time',
-        yaxis_title=part_num
-    )
+        forecasted = [pn in crossed.columns for pn in forecasts.columns]
+        forecasted = forecasts[forecasts.columns[forecasted]].dropna()
 
-    fig2.update_layout(
-        title='Cross Usage Over Time',
-        yaxis_title=cross_name
-    )
+        if forecasted.empty:
+            forecasted = forecasted * multiplier.loc[forecasted.columns]
+            forecasted = forecasted.sum(axis=1)
+            predicted = predictions[forecasted.columns] * multiplier.loc[forecasted.columns]
+            predicted = predicted.sum(axis=1)
 
-    return fig1, fig2
+            forecast = predicted.append(forecasted).sort_index()
+            fig1.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
+
+        fig1.update_layout(title='Total Consumption')
+
+        graphs = []
+        i = 0
+        for part_num in cross.parts:
+            dff = use_only[part_num].reset_index()
+
+            x = dff.index.values.reshape(-1, 1)
+            y = dff[part_num].values
+            model1 = LinearRegression()
+            model1.fit(x, y)
+            preds1 = model1.predict(x)
+
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=dff.Date, y=preds1, name='Trend'))
+            fig.add_trace(go.Scatter(x=dff.Date, y=dff[part_num], name='Data'))
+
+            if part_num in forecasts.columns:
+                forecast = forecasts[part_num].dropna()
+                prediction = predictions[part_num].dropna()
+                forecast = prediction.append(forecast).sort_index()
+                fig.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
+
+            fig.update_layout(title=f'{part_num} Consumption')
+
+            graphs.append(dcc.Graph(
+                id=f'graph-{i}', figure=fig
+            ))
+
+        return fig1, html.Div(graphs)
 
 
 @app.callback(
