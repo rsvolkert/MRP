@@ -139,6 +139,7 @@ def update_graph(cross_val, n_clicks):
             forecast = forecasts[part_num].dropna()
             prediction = predictions[part_num].dropna()
             forecast = prediction.append(forecast).sort_index()
+            forecast = forecast.astype(int)
             fig1.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
 
         fig1.update_layout(title='Total Consumption')
@@ -155,7 +156,7 @@ def update_graph(cross_val, n_clicks):
         crossed = crossed.reset_index()
 
         x = crossed.index.values.reshape(-1, 1)
-        y = crossed.sum(axis=1).values
+        y = crossed.drop('Date', axis=1).sum(axis=1).values
         model2 = LinearRegression()
         model2.fit(x, y)
         preds2 = model2.predict(x)
@@ -167,13 +168,14 @@ def update_graph(cross_val, n_clicks):
         forecasted = [pn in crossed.columns for pn in forecasts.columns]
         forecasted = forecasts[forecasts.columns[forecasted]].dropna()
 
-        if forecasted.empty:
+        if not forecasted.empty:
             forecasted = forecasted * multiplier.loc[forecasted.columns]
-            forecasted = forecasted.sum(axis=1)
             predicted = predictions[forecasted.columns] * multiplier.loc[forecasted.columns]
+            forecasted = forecasted.sum(axis=1)
             predicted = predicted.sum(axis=1)
 
             forecast = predicted.append(forecasted).sort_index()
+            forecast = forecast.astype(int)
             fig1.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
 
         fig1.update_layout(title='Total Consumption')
@@ -197,6 +199,7 @@ def update_graph(cross_val, n_clicks):
                 forecast = forecasts[part_num].dropna()
                 prediction = predictions[part_num].dropna()
                 forecast = prediction.append(forecast).sort_index()
+                forecast = forecast.astype(int)
                 fig.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
 
             fig.update_layout(title=f'{part_num} Consumption')
