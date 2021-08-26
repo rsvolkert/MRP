@@ -35,6 +35,7 @@ categories = pd.read_excel('Analysis Data.xlsx', sheet_name='Categories', index_
 cat_idx = [pn in use_only.columns for pn in categories.index]
 cat_opts = list(categories.loc[cat_idx, 'Sales category'].dropna().unique())
 cat_opts.remove('Disc')
+cat_opts.sort()
 
 # get part numbers that are not discontinued
 pn_filter = [pn not in categories.loc[categories['Sales category'] == 'Disc'].index for pn in part_nums]
@@ -115,7 +116,7 @@ def update_graph(cross_val, n_clicks):
     use_only = use_only[use_only.columns[(use_only != 0).any()]]
 
     forecasts = pd.read_excel('Analysis Data.xlsx', sheet_name='Forecasts', index_col=0).T
-    predictions = pd.read_excel('Analysis Data.xlsx', sheet_name='Predictions', index_col=0).T
+    predictions = pd.read_excel('Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
 
     # generate cross
     cross = Cross(cross_val)
