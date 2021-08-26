@@ -60,6 +60,7 @@ app.layout = html.Div([
 
         dcc.Dropdown(
             id='dropdown',
+            value=crosses.Cross.unique()[0],
             clearable=False
         )
     ]),
@@ -89,6 +90,21 @@ app.layout = html.Div([
     html.Div(id='graph-container'),
     html.Div(dcc.Graph(id='empty', figure={'data': []}), style={'display': 'none'})
 ])
+
+
+@app.callback(
+    [Output('dropdown', 'options'),
+     Output('dropdown', 'value')],
+    Input('options', 'value')
+)
+def update_dropdown(options):
+    if not options:
+        return [{'label': i, 'value': i} for i in list(crosses.Cross.unique())], crosses.Cross.unique()[0]
+
+    pns = categories[categories['Sales category'].isin(options)].index
+    pns = pns[pns.isin(use_only.columns)]
+    return_crosses = crosses.loc[pns]
+    return [{'label': i, 'value': i} for i in list(return_crosses.Cross.unique())], return_crosses.Cross.unique()[0]
 
 
 @app.callback(
@@ -235,25 +251,6 @@ def forecast(n_clicks, options):
 
     return 'Forecasting complete. Click reload to see changes.'
 
-@app.callback(
-    [Output('dropdown', 'options'),
-     Output('dropdown', 'value')],
-    Input('options', 'value')
-)
-def update_dropdown(options):
-    if not options:
-        return [{'label': i, 'value': i} for i in list(crosses.Cross.unique())], crosses.Cross.unique()[0]
-
-    pns = categories[categories['Sales category'].isin(options)].index
-    pns = pns[pns.isin(use_only.columns)]
-    return_crosses = crosses.loc[pns]
-    return [{'label': i, 'value': i} for i in list(return_crosses.Cross.unique())], return_crosses.Cross.unique()[0]
-
-
-def open_browser():
-    webbrowser.open_new('http://localhost:8050')
-
 
 if __name__ == '__main__':
-    Timer(1, open_browser).start()
     app.run_server()
