@@ -252,5 +252,10 @@ def forecast(n_clicks, options):
     return 'Forecasting complete. Click reload to see changes.'
 
 
+def open_browser():
+    webbrowser.open_new('http://localhost:8050')
+
+
 if __name__ == '__main__':
-    app.run_server()
+    Timer(1, open_browser).start()
+    app.run_server(use_reloader=False)
