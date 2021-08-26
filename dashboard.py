@@ -60,8 +60,6 @@ app.layout = html.Div([
 
         dcc.Dropdown(
             id='dropdown',
-            options=[{'label': i, 'value': i} for i in list(crosses.Cross.unique())],
-            value=crosses.Cross.unique()[0],
             clearable=False
         )
     ]),
@@ -236,6 +234,20 @@ def forecast(n_clicks, options):
         return 'There was an error.'
 
     return 'Forecasting complete. Click reload to see changes.'
+
+@app.callback(
+    [Output('dropdown', 'options'),
+     Output('dropdown', 'value')],
+    Input('options', 'value')
+)
+def update_dropdown(options):
+    if not options:
+        return [{'label': i, 'value': i} for i in list(crosses.Cross.unique())], crosses.Cross.unique()[0]
+
+    pns = categories[categories['Sales category'].isin(options)].index
+    pns = pns[pns.isin(use_only.columns)]
+    return_crosses = crosses.loc[pns]
+    return [{'label': i, 'value': i} for i in list(return_crosses.Cross.unique())], return_crosses.Cross.unique()[0]
 
 
 def open_browser():
