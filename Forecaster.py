@@ -1,5 +1,7 @@
+import sys
 import pandas as pd
 from Part import Part
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 
@@ -16,7 +18,12 @@ class Forecaster:
         self.max_mo = self.dat.index.max()
 
     def forecast(self):
+        total_len = len(self.dat.columns)
+        processed = 0
         for part_num in self.dat.columns:
+            processed += 1
+            print(f'Forecasting {part_num}. {(processed / total_len)}% complete.')
+
             part = Part(self.dat, part_num)
             forecasts, predictions, error = part.forecast(self.months, part.nonzero())
             self.forecasts[part_num] = forecasts
@@ -61,3 +68,38 @@ class Forecaster:
             forecasts.T.to_excel(writer, sheet_name='Forecasts')
             predictions.sort_index().T.to_excel(writer, sheet_name='Predictions')
             errors.to_excel(writer, sheet_name='Errors')
+
+
+if __name__ == '__main__':
+    data = pd.read_excel('Analysis Data.xlsx', sheet_name='Main')
+    data = data.loc[data.PartNumber.notnull()]
+    data.dropna(axis=1, how='all', inplace=True)
+    data.set_index('PartNumber', inplace=True)
+
+    dates = []
+    for col in data.columns:
+        if isinstance(col, datetime):
+            dates.append(col)
+
+    use_only = data[dates].T
+    use_only['Date'] = [date.date() for date in use_only.index]
+    use_only.reset_index(drop=True, inplace=True)
+    use_only.set_index('Date', inplace=True)
+    use_only = use_only[use_only.columns[(use_only != 0).any()]]
+
+    categories = pd.read_excel('Analysis Data.xlsx', sheet_name='Categories', index_col=0)
+    non_disc = categories.loc[categories['Sales category'] != 'Disc'].index
+
+    pns = [pn in non_disc for pn in use_only.columns]
+    pns = use_only.columns[pns]
+    use_only = use_only[pns]
+
+    forecaster = Forecaster(use_only, 6)
+    response = input("Have you checked your data? If ready to forecast press any key. To exit press 'n'")
+    if response == 'n':
+        print('You have canceled the forecast.')
+        sys.exit()
+    forecaster.forecast()
+    print('Completed forecasting. Writing to Excel. Have you closed the Excel file?')
+    forecaster.to_excel()
+

@@ -8,7 +8,6 @@ from dash.dependencies import Input, Output, State
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import IsolationForest
 from Cross import Cross
-from Forecaster import Forecaster
 import webbrowser
 from threading import Timer
 
@@ -74,13 +73,6 @@ app.layout = html.Div([
         labelStyle={'display': 'inline-block'},
         inputStyle={'margin-left': '20px'}
     ),
-
-    html.Br(),
-
-    html.Div([
-        html.Button('Forecast', id='btn', n_clicks=0),
-        html.Div(id='container', children='Select categories and press forecast')
-    ]),
 
     html.Br(),
 
@@ -224,32 +216,6 @@ def update_graph(cross_val, n_clicks):
             ))
 
         return fig1, html.Div(graphs)
-
-
-@app.callback(
-    Output('container', 'children'),
-    Input('btn', 'n_clicks'),
-    State('options', 'value')
-)
-def forecast(n_clicks, options):
-    if not n_clicks:
-        return 'Select categories and click forecast.'
-
-    if not options:
-        return 'You must select a category.'
-
-    pns = categories[categories['Sales category'].isin(options)].index
-    pns = pns[pns.isin(use_only.columns)]
-    dat = use_only[pns]
-
-    forecaster = Forecaster(dat, 6)
-    try:
-        forecaster.forecast()
-        forecaster.to_excel()
-    except:
-        return 'There was an error.'
-
-    return 'Forecasting complete. Click reload to see changes.'
 
 
 def open_browser():
