@@ -1,5 +1,6 @@
 import sys
 import pandas as pd
+import multiprocessing
 from Part import Part
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -71,6 +72,8 @@ class Forecaster:
 
 
 if __name__ == '__main__':
+    multiprocessing.freeze_support()
+    
     data = pd.read_excel('Analysis Data.xlsx', sheet_name='Main')
     data = data.loc[data.PartNumber.notnull()]
     data.dropna(axis=1, how='all', inplace=True)
