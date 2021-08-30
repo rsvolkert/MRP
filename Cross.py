@@ -2,7 +2,7 @@ import re
 import pandas as pd
 from datetime import datetime
 
-data = pd.read_excel('Analysis Data.xlsx', sheet_name='Cross')
+data = pd.read_excel('../Analysis Data.xlsx', sheet_name='Cross')
 data = data.loc[data.PartNumber.notnull()]
 data.dropna(axis=1, how='all', inplace=True)
 data.set_index('PartNumber', inplace=True)

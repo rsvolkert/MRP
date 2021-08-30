@@ -40,9 +40,9 @@ class Forecaster:
             print(f'Forecast completed in {(end - start) / 60:.2f} minutes.')
 
     def to_excel(self):
-        forecasts = pd.read_excel('Analysis Data.xlsx', sheet_name='Forecasts', index_col=0)
-        predictions = pd.read_excel('Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
-        errors = pd.read_excel('Analysis Data.xlsx', sheet_name='Errors', index_col=0)
+        forecasts = pd.read_excel('../Analysis Data.xlsx', sheet_name='Forecasts', index_col=0)
+        predictions = pd.read_excel('../Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
+        errors = pd.read_excel('../Analysis Data.xlsx', sheet_name='Errors', index_col=0)
 
         forecasts.index = pd.to_datetime(forecasts.index).strftime('%Y-%m-%d')
         predictions.index = pd.to_datetime(predictions.index).strftime('%Y-%m-%d')
@@ -69,7 +69,7 @@ class Forecaster:
                 errors.drop(new_errors[joint_errors], axis=0, inplace=True)
             errors = pd.concat([self.errors, errors], axis=0)
 
-        with pd.ExcelWriter('Analysis Data.xlsx', mode='a', if_sheet_exists='replace') as writer:
+        with pd.ExcelWriter('../Analysis Data.xlsx', mode='a', if_sheet_exists='replace') as writer:
             forecasts.T.to_excel(writer, sheet_name='Forecasts')
             predictions.sort_index().T.to_excel(writer, sheet_name='Predictions')
             errors.to_excel(writer, sheet_name='Errors')
@@ -78,7 +78,7 @@ class Forecaster:
 if __name__ == '__main__':
     mp.freeze_support()
 
-    data = pd.read_excel('Analysis Data.xlsx', sheet_name='Main')
+    data = pd.read_excel('../Analysis Data.xlsx', sheet_name='Main')
     data = data.loc[data.PartNumber.notnull()]
     data.dropna(axis=1, how='all', inplace=True)
     data.set_index('PartNumber', inplace=True)
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     use_only.set_index('Date', inplace=True)
     use_only = use_only[use_only.columns[(use_only != 0).any()]]
 
-    categories = pd.read_excel('Analysis Data.xlsx', sheet_name='Categories', index_col=0)
+    categories = pd.read_excel('../Analysis Data.xlsx', sheet_name='Categories', index_col=0)
     non_disc = categories.loc[categories['Sales category'] != 'Disc'].index
 
     pns = [pn in non_disc for pn in use_only.columns]

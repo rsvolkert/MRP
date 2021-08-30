@@ -11,7 +11,7 @@ from Cross import Cross
 import webbrowser
 from threading import Timer
 
-data = pd.read_excel('Analysis Data.xlsx', sheet_name='Main')
+data = pd.read_excel('../Analysis Data.xlsx', sheet_name='Main')
 data = data.loc[data.PartNumber.notnull()]
 data.dropna(axis=1, how='all', inplace=True)
 data.set_index('PartNumber', inplace=True)
@@ -28,9 +28,9 @@ use_only.set_index('Date', inplace=True)
 use_only = use_only[use_only.columns[(use_only != 0).any()]]
 part_nums = use_only.columns.to_numpy()
 
-crosses = pd.read_excel('Analysis Data.xlsx', sheet_name='Cross', index_col=0)
+crosses = pd.read_excel('../Analysis Data.xlsx', sheet_name='Cross', index_col=0)
 
-categories = pd.read_excel('Analysis Data.xlsx', sheet_name='Categories', index_col=0)
+categories = pd.read_excel('../Analysis Data.xlsx', sheet_name='Categories', index_col=0)
 cat_idx = [pn in use_only.columns for pn in categories.index]
 cat_opts = list(categories.loc[cat_idx, 'Sales category'].dropna().unique())
 cat_opts.remove('Disc')
@@ -44,7 +44,7 @@ part_nums = list(part_nums[pn_filter])
 crosses = crosses.loc[part_nums]
 crosses.loc[crosses.Cross == 0, 'Cross'] = crosses.loc[crosses.Cross == 0].index.values
 
-errors = pd.read_excel('Analysis Data.xlsx', sheet_name='Errors', index_col=0)
+errors = pd.read_excel('../Analysis Data.xlsx', sheet_name='Errors', index_col=0)
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -105,7 +105,7 @@ def update_dropdown(options):
     [Input('dropdown', 'value'),
      Input('reload', 'n_clicks')])
 def update_graph(cross_val, n_clicks):
-    data = pd.read_excel('Analysis Data.xlsx', sheet_name='Main')
+    data = pd.read_excel('../Analysis Data.xlsx', sheet_name='Main')
     data = data.loc[data.PartNumber.notnull()]
     data.dropna(axis=1, how='all', inplace=True)
     data.set_index('PartNumber', inplace=True)
@@ -121,8 +121,8 @@ def update_graph(cross_val, n_clicks):
     use_only.set_index('Date', inplace=True)
     use_only = use_only[use_only.columns[(use_only != 0).any()]]
 
-    forecasts = pd.read_excel('Analysis Data.xlsx', sheet_name='Forecasts', index_col=0).T
-    predictions = pd.read_excel('Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
+    forecasts = pd.read_excel('../Analysis Data.xlsx', sheet_name='Forecasts', index_col=0).T
+    predictions = pd.read_excel('../Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
 
     # generate cross
     cross = Cross(cross_val)
