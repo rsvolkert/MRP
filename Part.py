@@ -1,9 +1,9 @@
 import sys
 import warnings
 import numpy as np
+import multiprocessing as mp
+from functools import partial
 from statsmodels.tsa.arima.model import ARIMA
-from multiprocessing import cpu_count
-from joblib import Parallel, delayed
 from evaluate_arima import evaluate_arima
 
 if not sys.warnoptions:
@@ -30,15 +30,14 @@ class Part:
 
         score = []
         try:
-            executor = Parallel(n_jobs=cpu_count(), backend='multiprocessing')
-            tasks = (delayed(evaluate_arima)(train, test, (p,d,q)) for p in range(6) for d in range(6) for q in range(6))
-            results = executor(tasks)
-            score.append(results)
+            orders = partial(evaluate_arima, test=test, train=train)
+            with mp.Pool() as pool:
+                score = pool.map(orders, [(p,d,q) for p in range(6) for d in range(6) for q in range(6)])
         except:
             print('Error')
 
-        scores = [list(err.keys())[0] for err in score[0]]
-        best = score[0][scores.index(min(scores))]
+        scores = [list(err.keys())[0] for err in score]
+        best = score[scores.index(min(scores))]
 
         err = list(best.keys())[0]
         preds = list(best.values())[0][0]

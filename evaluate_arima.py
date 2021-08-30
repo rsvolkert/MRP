@@ -8,7 +8,7 @@ if not sys.warnoptions:
     warnings.simplefilter('ignore')
 
 
-def evaluate_arima(train, test, order):
+def evaluate_arima(order, train, test):
     # predict
     predictions = []
     for i in range(len(test)):

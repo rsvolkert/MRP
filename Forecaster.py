@@ -1,6 +1,7 @@
 import sys
+import time
 import pandas as pd
-import multiprocessing
+import multiprocessing as mp
 from Part import Part
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -23,8 +24,9 @@ class Forecaster:
         processed = 0
         for part_num in self.dat.columns:
             processed += 1
-            print(f'Forecasting {part_num}. {(processed / total_len)}% complete.')
+            print(f'Forecasting {part_num}. Part {processed} of {total_len}.')
 
+            start = time.time()
             part = Part(self.dat, part_num)
             forecasts, predictions, error = part.forecast(self.months, part.nonzero())
             self.forecasts[part_num] = forecasts
@@ -34,6 +36,8 @@ class Forecaster:
             if min(dates) not in self.predictions.index:
                 self.predictions = self.predictions.reindex(dates)
             self.predictions.loc[dates, part_num] = predictions
+            end = time.time()
+            print(f'Forecast completed in {(end - start) / 60:.2f} minutes.')
 
     def to_excel(self):
         forecasts = pd.read_excel('Analysis Data.xlsx', sheet_name='Forecasts', index_col=0)
@@ -72,8 +76,8 @@ class Forecaster:
 
 
 if __name__ == '__main__':
-    multiprocessing.freeze_support()
-    
+    mp.freeze_support()
+
     data = pd.read_excel('Analysis Data.xlsx', sheet_name='Main')
     data = data.loc[data.PartNumber.notnull()]
     data.dropna(axis=1, how='all', inplace=True)
@@ -98,11 +102,11 @@ if __name__ == '__main__':
     use_only = use_only[pns]
 
     forecaster = Forecaster(use_only, 6)
-    response = input("Have you checked your data? If ready to forecast press any key. To exit press 'n'")
+    response = input("Have you checked your data? If ready to forecast press Enter. To exit press 'n'")
     if response == 'n':
         print('You have canceled the forecast.')
         sys.exit()
     forecaster.forecast()
-    print('Completed forecasting. Writing to Excel. Have you closed the Excel file?')
+    input('Completed forecasting. Writing to Excel. Have you closed the Excel file? (press Enter to continue)')
     forecaster.to_excel()
 
