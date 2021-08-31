@@ -106,7 +106,11 @@ if __name__ == '__main__':
     if response == 'n':
         print('You have canceled the forecast.')
         sys.exit()
+    start = time.time()
     forecaster.forecast()
+    end = time.time()
+    print(f'Total elapsed time: {(end - start) / 60:.2f}')
     input('Completed forecasting. Writing to Excel. Have you closed the Excel file? (press Enter to continue)')
     forecaster.to_excel()
+    input('Finished forecasting. Press Enter to exit.')
 
