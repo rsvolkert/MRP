@@ -16,6 +16,7 @@ class Forecaster:
         self.forecasts = pd.DataFrame(index=idx)
         self.predictions = pd.DataFrame()
         self.errors = pd.Series(index=dat.columns)
+        self.orders = pd.DataFrame(index=self.dat.columns, columns=['p', 'd', 'q'])
 
         self.max_mo = self.dat.index.max()
 
@@ -28,7 +29,8 @@ class Forecaster:
 
             start = time.time()
             part = Part(self.dat, part_num)
-            forecasts, predictions, error = part.forecast(self.months, part.nonzero())
+            forecasts, predictions, error, order = part.forecast(self.months, part.nonzero())
+            self.orders.loc[part_num] = order
             self.forecasts[part_num] = forecasts
             self.errors.loc[part_num] = error / part.nonzero().mean()
 

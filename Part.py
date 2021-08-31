@@ -32,7 +32,7 @@ class Part:
         try:
             orders = partial(evaluate_arima, test=test, train=train)
             with mp.Pool() as pool:
-                score = pool.map(orders, [(p,d,q) for p in range(6) for d in range(6) for q in range(6)])
+                score = pool.map(orders, [(p,d,q) for p in range(5) for d in range(4) for q in [0,2,3,4,5]])
         except:
             print('Error')
 
@@ -58,4 +58,4 @@ class Part:
             forecasts.append(yhat)
             temp = np.append(temp, yhat)
 
-        return forecasts, preds, err
+        return forecasts, preds, err, order
