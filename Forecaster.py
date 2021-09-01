@@ -97,9 +97,9 @@ if __name__ == '__main__':
     use_only = use_only[use_only.columns[(use_only != 0).any()]]
 
     categories = pd.read_excel('../Analysis Data.xlsx', sheet_name='Categories', index_col=0)
-    non_disc = categories.loc[categories['Sales category'] != 'Disc'].index
+    disc = categories.loc[categories['Sales category'] == 'Disc'].index
 
-    pns = [pn in non_disc for pn in use_only.columns]
+    pns = [pn not in disc for pn in use_only.columns]
     pns = use_only.columns[pns]
     use_only = use_only[pns]
 
