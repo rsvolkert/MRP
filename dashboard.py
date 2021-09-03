@@ -150,7 +150,7 @@ def update_graph(cross_val, n_clicks):
             forecast = forecast.astype(int)
             fig1.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
 
-        fig1.update_layout(title='Total Consumption')
+        fig1.update_layout(title=f'{part_num} Total Consumption')
 
         return fig1, []
 
@@ -183,7 +183,7 @@ def update_graph(cross_val, n_clicks):
             forecast = forecasted.astype(int)
             fig1.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
 
-        fig1.update_layout(title='Total Consumption')
+        fig1.update_layout(title=f'{cross.name} Total Consumption')
 
         graphs = []
         i = 0
