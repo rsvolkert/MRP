@@ -29,8 +29,7 @@ class Forecaster:
 
             start = time.time()
             part = Part(self.dat, part_num)
-            forecasts, predictions, error, order = part.forecast(self.months, part.nonzero())
-            self.orders.loc[part_num] = order
+            forecasts, predictions, error = part.forecast(self.months, part.nonzero())
             self.forecasts[part_num] = forecasts
             self.errors.loc[part_num] = error / part.nonzero().mean()
 
@@ -39,10 +38,14 @@ class Forecaster:
                 self.predictions = self.predictions.reindex(dates)
             self.predictions.loc[dates, part_num] = predictions
             end = time.time()
-            print(f'Forecast completed in {(end - start) / 60:.2f} minutes.')
+            print(f'Forecast completed in {(end - start):.2f} seconds.')
+        self.forecasts[self.forecasts < 0] = 0
+        self.forecasts[self.forecasts.isnull()] = 0
+        self.predictions[self.predictions < 0] = 0
+        self.predictions[self.predictions.isnull()] = 0
 
     def to_excel(self):
-        forecasts = pd.read_excel('../Analysis Data.xlsx', sheet_name='Forecasts', index_col=0)
+        forecasts = pd.read_excel('../Analysis Data.xlsx', sheet_name='Forecasts', index_col=0).T
         predictions = pd.read_excel('../Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
         errors = pd.read_excel('../Analysis Data.xlsx', sheet_name='Errors', index_col=0)
 
@@ -73,7 +76,7 @@ class Forecaster:
 
         with pd.ExcelWriter('../Analysis Data.xlsx', mode='a', if_sheet_exists='replace') as writer:
             forecasts.T.to_excel(writer, sheet_name='Forecasts')
-            predictions.sort_index().T.to_excel(writer, sheet_name='Predictions')
+            predictions.sort_index().to_excel(writer, sheet_name='Predictions')
             errors.to_excel(writer, sheet_name='Errors')
 
 
@@ -111,8 +114,11 @@ if __name__ == '__main__':
     start = time.time()
     forecaster.forecast()
     end = time.time()
-    print(f'Total elapsed time: {(end - start) / 60:.2f}')
+    print(f'Total elapsed time: {(end - start) / 60:.2f} minutes')
     input('Completed forecasting. Writing to Excel. Have you closed the Excel file? (press Enter to continue)')
-    forecaster.to_excel()
+    try:
+        forecaster.to_excel()
+    except:
+        print('There was an error writing to excel.')
     input('Finished forecasting. Press Enter to exit.')
 

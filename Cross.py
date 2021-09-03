@@ -2,11 +2,10 @@ import re
 import pandas as pd
 from datetime import datetime
 
-data = pd.read_excel('../Analysis Data.xlsx', sheet_name='Cross')
+data = pd.read_excel('../Analysis Data.xlsx', sheet_name='Main')
 data = data.loc[data.PartNumber.notnull()]
 data.dropna(axis=1, how='all', inplace=True)
 data.set_index('PartNumber', inplace=True)
-data.loc[data.Cross == 0, 'Cross'] = data.loc[data.Cross == 0].index.values
 
 dates = []
 for col in data.columns:
@@ -14,45 +13,38 @@ for col in data.columns:
         dates.append(col)
 
 use_only = data[dates].T
+use_only['Date'] = [date.date() for date in use_only.index]
+use_only.reset_index(drop=True, inplace=True)
+use_only.set_index('Date', inplace=True)
+use_only = use_only[use_only.columns[(use_only != 0).any()]]
+part_nums = use_only.columns.to_numpy()
+
+crosses = pd.read_excel('../Analysis Data.xlsx', sheet_name='Cross', index_col=0)
+
+categories = pd.read_excel('../Analysis Data.xlsx', sheet_name='Categories', index_col=0)
+cat_idx = [pn in use_only.columns for pn in categories.index]
+cat_opts = list(categories.loc[cat_idx, 'Sales category'].dropna().unique())
+if 'Disc' in cat_opts:
+    cat_opts.remove('Disc')
+cat_opts.sort()
+
+# get part numbers that are not discontinued
+pn_filter = [pn not in categories.loc[categories['Sales category'] == 'Disc'].index for pn in part_nums]
+part_nums = list(part_nums[pn_filter])
+
+# generate crosses to be used
+crosses = crosses.loc[part_nums]
+crosses.loc[crosses.Cross == 0, 'Cross'] = crosses.loc[crosses.Cross == 0].index.values
 
 
 class Cross:
     def __init__(self, cross_name):
         self.name = cross_name
-
-        if self.name not in data.Cross.values:
-            self.parts = [self.name]
-        elif len(data.loc[self.name]) == 1:
-            self.parts = [self.name]
-        else:
-            self.parts = list(data.loc[data.Cross == self.name].index)
+        self.parts = list(crosses.loc[crosses.Cross == cross_name].index)
+        self.qty = crosses.loc[self.parts, 'multiplier']
 
     def get_multiplier(self):
-
-        if re.search('/\d+$', self.name):
-            splits = self.name.split('/')
-            for split in splits:
-                try:
-                    units = int(split)
-                    break
-                except:
-                    continue
-        else:
-            units = 1
-
-        for part in self.parts:
-            if re.search('/\d+$', part):
-                splits = part.split('/')
-                for split in splits:
-                    try:
-                        data.loc[part, 'multiplier'] = int(split) / units
-                        break
-                    except:
-                        continue
-            else:
-                data.loc[part, 'multiplier'] = 1 / units
-
-        return data.loc[self.parts, 'multiplier']
+        return self.qty
 
     def nonzero(self):
         cross = (self.get_multiplier() * use_only[self.parts]).sum(axis=1)
