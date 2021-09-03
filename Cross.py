@@ -23,9 +23,10 @@ crosses = pd.read_excel('../Analysis Data.xlsx', sheet_name='Cross', index_col=0
 
 categories = pd.read_excel('../Analysis Data.xlsx', sheet_name='Categories', index_col=0)
 cat_idx = [pn in use_only.columns for pn in categories.index]
-cat_opts = list(categories.loc[cat_idx, 'Sales category'].dropna().unique())
+cat_opts = list(categories.loc[cat_idx, 'Sales category'].unique())
 if 'Disc' in cat_opts:
     cat_opts.remove('Disc')
+cat_opts = ['NA' if cat is np.nan else cat for cat in cat_opts]
 cat_opts.sort()
 
 # get part numbers that are not discontinued
@@ -41,10 +42,11 @@ class Cross:
     def __init__(self, cross_name):
         self.name = cross_name
         self.parts = list(crosses.loc[crosses.Cross == cross_name].index)
-        self.qty = crosses.loc[self.parts, 'multiplier']
+        self.qty = crosses.loc[self.parts, 'Qty']
 
     def get_multiplier(self):
-        return self.qty
+        units = self.qty.loc[self.name]
+        return self.qty / units
 
     def nonzero(self):
         cross = (self.get_multiplier() * use_only[self.parts]).sum(axis=1)

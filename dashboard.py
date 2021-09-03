@@ -31,8 +31,10 @@ crosses = pd.read_excel('../Analysis Data.xlsx', sheet_name='Cross', index_col=0
 
 categories = pd.read_excel('../Analysis Data.xlsx', sheet_name='Categories', index_col=0)
 cat_idx = [pn in use_only.columns for pn in categories.index]
-cat_opts = list(categories.loc[cat_idx, 'Sales category'].dropna().unique())
-cat_opts.remove('Disc')
+cat_opts = list(categories.loc[cat_idx, 'Sales category'].unique())
+if 'Disc' in cat_opts:
+    cat_opts.remove('Disc')
+cat_opts = ['NA' if cat is np.nan else cat for cat in cat_opts]
 cat_opts.sort()
 
 # get part numbers that are not discontinued
