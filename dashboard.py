@@ -6,7 +6,6 @@ from datetime import datetime
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import IsolationForest
 from Cross import Cross
 import webbrowser
 from threading import Timer
@@ -122,7 +121,6 @@ def update_graph(cross_val, n_clicks):
     use_only = use_only[use_only.columns[(use_only != 0).any()]]
 
     forecasts = pd.read_excel('../Analysis Data.xlsx', sheet_name='Forecasts', index_col=0).T
-    predictions = pd.read_excel('../Analysis Data.xlsx', sheet_name='Predictions', index_col=0)
 
     # generate cross
     cross = Cross(cross_val)
@@ -130,7 +128,9 @@ def update_graph(cross_val, n_clicks):
     if len(cross.parts) == 1:
         part_num = cross.parts[0]
 
-        dff = use_only[part_num].reset_index()
+        dff = use_only[part_num]
+        dff = dff.iloc[dff.to_numpy().nonzero()[0].min():]
+        dff = dff.reset_index()
 
         x = dff.index.values.reshape(-1, 1)
         y = dff[part_num].values
@@ -139,13 +139,11 @@ def update_graph(cross_val, n_clicks):
         preds1 = model1.predict(x)
 
         fig1 = go.Figure()
-        fig1.add_trace(go.Scatter(x=dff.Date, y=preds1, name='Trend'))
-        fig1.add_trace(go.Scatter(x=dff.Date, y=dff[part_num], name='Data'))
+        fig1.add_trace(go.Scatter(x=dff.Date, y=preds1, name='Trend', mode='lines'))
+        fig1.add_trace(go.Scatter(x=dff.Date, y=dff[part_num], name='Data', mode='lines'))
 
         if part_num in forecasts.columns:
             forecast = forecasts[part_num].dropna()
-            prediction = predictions[part_num].dropna()
-            forecast = prediction.append(forecast).sort_index()
             forecast = forecast.astype(int)
             fig1.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
 
@@ -155,11 +153,12 @@ def update_graph(cross_val, n_clicks):
 
     else:
         multiplier = cross.get_multiplier()
-        parts = [pn in use_only.columns for pn in multiplier.index]
-        parts = multiplier[parts].index
-        crossed = multiplier.loc[parts] * use_only[parts]
-        not_disc = [pn not in categories.loc[categories['Sales category'] == 'Disc'].index for pn in parts]
-        crossed = crossed[crossed.columns[not_disc]]
+        crossed = multiplier * use_only[cross.parts]
+        idx_min = float('inf')
+        for col in crossed.columns:
+            idx = crossed[col].to_numpy().nonzero()[0].min()
+            idx_min = idx if idx < idx_min else idx_min
+        crossed = crossed.iloc[idx_min:]
         crossed = crossed.reset_index()
 
         x = crossed.index.values.reshape(-1, 1)
@@ -169,20 +168,16 @@ def update_graph(cross_val, n_clicks):
         preds2 = model2.predict(x)
 
         fig1 = go.Figure()
-        fig1.add_trace(go.Scatter(x=crossed.Date, y=preds2, name='Trend'))
-        fig1.add_trace(go.Scatter(x=crossed.Date, y=crossed.sum(axis=1), name='Data'))
+        fig1.add_trace(go.Scatter(x=crossed.Date, y=preds2, name='Trend', mode='lines'))
+        fig1.add_trace(go.Scatter(x=crossed.Date, y=crossed.sum(axis=1), name='Data', mode='lines'))
 
         forecasted = [pn in crossed.columns for pn in forecasts.columns]
         forecasted = forecasts[forecasts.columns[forecasted]].dropna()
 
         if not forecasted.empty:
             forecasted = forecasted * multiplier.loc[forecasted.columns]
-            predicted = predictions[forecasted.columns] * multiplier.loc[forecasted.columns]
             forecasted = forecasted.sum(axis=1)
-            predicted = predicted.sum(axis=1)
-
-            forecast = predicted.append(forecasted).sort_index()
-            forecast = forecast.astype(int)
+            forecast = forecasted.astype(int)
             fig1.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
 
         fig1.update_layout(title='Total Consumption')
@@ -191,6 +186,7 @@ def update_graph(cross_val, n_clicks):
         i = 0
         for part_num in cross.parts:
             dff = use_only[part_num].reset_index()
+            dff = dff.iloc[idx_min:]
 
             x = dff.index.values.reshape(-1, 1)
             y = dff[part_num].values
@@ -199,13 +195,11 @@ def update_graph(cross_val, n_clicks):
             preds1 = model1.predict(x)
 
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=dff.Date, y=preds1, name='Trend'))
-            fig.add_trace(go.Scatter(x=dff.Date, y=dff[part_num], name='Data'))
+            fig.add_trace(go.Scatter(x=dff.Date, y=preds1, name='Trend', mode='lines'))
+            fig.add_trace(go.Scatter(x=dff.Date, y=dff[part_num], name='Data', mode='lines'))
 
             if part_num in forecasts.columns:
                 forecast = forecasts[part_num].dropna()
-                prediction = predictions[part_num].dropna()
-                forecast = prediction.append(forecast).sort_index()
                 forecast = forecast.astype(int)
                 fig.add_trace(go.Scatter(x=forecast.index, y=forecast.values, name='Forecast'))
 

@@ -20,6 +20,6 @@ def evaluate_arima(order, train, test):
         yhat = model_fit.forecast()[0] if model_fit.forecast()[0] > 0 else 0
 
         predictions.append(yhat)
-        train = np.append(train, test[i])
+        train = np.append(train, yhat)
     err = mae(test, predictions)
     return {err: [predictions, order]}
