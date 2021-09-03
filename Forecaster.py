@@ -83,42 +83,84 @@ class Forecaster:
 if __name__ == '__main__':
     mp.freeze_support()
 
-    data = pd.read_excel('../Analysis Data.xlsx', sheet_name='Main')
-    data = data.loc[data.PartNumber.notnull()]
-    data.dropna(axis=1, how='all', inplace=True)
-    data.set_index('PartNumber', inplace=True)
+    god_response = 'y'
+    while god_response == 'y':
+        data = pd.read_excel('../Analysis Data.xlsx', sheet_name='Main')
+        data = data.loc[data.PartNumber.notnull()]
+        data.dropna(axis=1, how='all', inplace=True)
+        data.set_index('PartNumber', inplace=True)
 
-    dates = []
-    for col in data.columns:
-        if isinstance(col, datetime):
-            dates.append(col)
+        dates = []
+        for col in data.columns:
+            if isinstance(col, datetime):
+                dates.append(col)
 
-    use_only = data[dates].T
-    use_only['Date'] = [date.date() for date in use_only.index]
-    use_only.reset_index(drop=True, inplace=True)
-    use_only.set_index('Date', inplace=True)
-    use_only = use_only[use_only.columns[(use_only != 0).any()]]
+        use_only = data[dates].T
+        use_only['Date'] = [date.date() for date in use_only.index]
+        use_only.reset_index(drop=True, inplace=True)
+        use_only.set_index('Date', inplace=True)
+        use_only = use_only[use_only.columns[(use_only != 0).any()]]
 
-    categories = pd.read_excel('../Analysis Data.xlsx', sheet_name='Categories', index_col=0)
-    disc = categories.loc[categories['Sales category'] == 'Disc'].index
+        categories = pd.read_excel('../Analysis Data.xlsx', sheet_name='Categories', index_col=0)
+        disc = categories.loc[categories['Sales category'] == 'Disc'].index
 
-    pns = [pn not in disc for pn in use_only.columns]
-    pns = use_only.columns[pns]
-    use_only = use_only[pns]
+        pns = [pn not in disc for pn in use_only.columns]
+        pns = use_only.columns[pns]
+        use_only = use_only[pns]
 
-    forecaster = Forecaster(use_only, 6)
-    response = input("Have you checked your data? If ready to forecast press Enter. To exit press 'n'")
-    if response == 'n':
-        print('You have canceled the forecast.')
-        sys.exit()
-    start = time.time()
-    forecaster.forecast()
-    end = time.time()
-    print(f'Total elapsed time: {(end - start) / 60:.2f} minutes')
-    input('Completed forecasting. Writing to Excel. Have you closed the Excel file? (press Enter to continue)')
-    try:
-        forecaster.to_excel()
-    except:
-        print('There was an error writing to excel.')
+        response = input("Do you want to run all parts? (y/n)")
+
+        if response.lower() == 'n':
+            cats = input('\nType categories separated by commas.')
+            cats = cats.lower()
+            cats = cats.split(',')
+            cats = [cat.strip() for cat in cats]
+
+            parts = []
+            for cat in cats:
+                if cat not in categories['Sales category'].str.lower().values:
+                    print('There were invalid categories. Please try again.')
+                    continue
+                parts.extend(list(categories.loc[categories['Sales category'].str.lower() == cat].index))
+
+            print('\nYou have selected:')
+            for cat in cats:
+                print(cat)
+            print(f'Totalling {len(parts)} parts.')
+            cat_response = input('Is this correct? (y/n)')
+
+            while cat_response.lower() == 'n':
+                cats = input('Type categories separated by commas.')
+                cats = cats.lower()
+                cats = cats.split(',')
+                cats = [cat.strip() for cat in cats]
+
+                parts = []
+                for cat in cats:
+                    if cat not in categories['Sales category'].str.lower().values:
+                        print('There were invalid categories. Please try again.')
+                        continue
+                    parts.extend(list(categories.loc[categories['Sales category'].str.lower() == cat].index))
+
+                print('You have selected:')
+                for cat in cats:
+                    print(cat)
+                print(f'Totalling {len(parts)} parts.')
+                cat_response = input('Is this correct? (y/n)')
+
+            forecaster = Forecaster(use_only[parts], 6)
+        else:
+            forecaster = Forecaster(use_only, 6)
+        start = time.time()
+        forecaster.forecast()
+        end = time.time()
+        print(f'\nTotal elapsed time: {(end - start) / 60:.2f} minutes')
+        input('Completed forecasting. Writing to Excel. Have you closed the Excel file? (press Enter to continue)')
+        try:
+            forecaster.to_excel()
+        except:
+            print('There was an error writing to excel.')
+        god_response = input('\nWould you like to run more parts? (y/n)\n')
+
     input('Finished forecasting. Press Enter to exit.')
 
