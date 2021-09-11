@@ -73,6 +73,10 @@ class Forecaster:
             if list(new_errors[joint_errors]):
                 errors.drop(new_errors[joint_errors], axis=0, inplace=True)
             errors = pd.concat([self.errors, errors], axis=0)
+        else:
+            forecasts = self.forecasts
+            predictions = self.predictions
+            errors = self.errors
 
         with pd.ExcelWriter('../Analysis Data.xlsx', mode='a', if_sheet_exists='replace') as writer:
             forecasts.T.to_excel(writer, sheet_name='Forecasts')
